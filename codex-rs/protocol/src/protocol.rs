@@ -2657,9 +2657,10 @@ impl SessionSource {
 
     pub fn get_agent_role(&self) -> Option<String> {
         match self {
-            SessionSource::Cli | SessionSource::VSCode | SessionSource::Exec => {
-                Some(ROOT_AGENT_ROLE_NAME.to_string())
-            }
+            SessionSource::Cli
+            | SessionSource::VSCode
+            | SessionSource::Exec
+            | SessionSource::Mcp => Some(ROOT_AGENT_ROLE_NAME.to_string()),
             SessionSource::SubAgent(SubAgentSource::ThreadSpawn { agent_role, .. }) => {
                 agent_role.clone()
             }
@@ -3921,6 +3922,7 @@ mod tests {
             SessionSource::Cli,
             SessionSource::VSCode,
             SessionSource::Exec,
+            SessionSource::Mcp,
         ] {
             assert_eq!(
                 source.get_agent_role(),

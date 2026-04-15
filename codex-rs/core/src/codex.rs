@@ -496,6 +496,14 @@ impl Codex {
         let (tx_sub, rx_sub) = async_channel::bounded(SUBMISSION_CHANNEL_CAPACITY);
         let (tx_event, rx_event) = async_channel::unbounded();
 
+        if session_source.get_agent_role().as_deref()
+            == Some(crate::agent::role::ROOT_AGENT_ROLE_NAME)
+        {
+            crate::agent::role::apply_root_role_to_config(&mut config)
+                .await
+                .map_err(CodexErr::Fatal)?;
+        }
+
         let environment = environment_manager
             .current()
             .await

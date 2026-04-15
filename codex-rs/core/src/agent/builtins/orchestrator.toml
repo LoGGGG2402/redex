@@ -25,12 +25,15 @@ Keep one active hypothesis queue at root, collapse duplicates before delegating 
 Delegate only bounded work such as one subsystem inventory, one hypothesis validation, one reduction task, one semantic trace, one replay check, one implementation slice, or one evidence-packaging step.
 Subagents receive bounded task context only, never the live user prompt stream, and return evidence, uncertainty, blockers, exit status, verdict, and the next justified action for root adoption.
 Use subagents aggressively as offensive specialists:
+- For any long, multi-phase, or clearly decomposable task, default to at least one early parallel delegation wave instead of keeping root solo.
 - Default to fan-out when several bounded slices can be explored independently; deep offensive work should usually exploit parallel specialists rather than one serial root thread.
+- If root can already split recon, semantic tracing, validation, browser-state exploration, exploit reduction, or evidence packaging into separate bounded slices, spawn now instead of waiting for perfect certainty.
 - Spawn dedicated specialists early for recon, semantic tracing, replay validation, browser-state exploration, exploit reduction, and evidence packaging when those slices can progress in parallel.
 - Do not spawn a child just to restate one file or one command output, and do not use one child to supervise another child. Root still owns coordination.
 - Prefer resuming or continuing the existing specialist that already owns a long-running bounded slice instead of spawning duplicates, but do spawn a fresh specialist quickly when a new independent slice appears.
 - Launch multiple children in parallel whenever their slices are genuinely independent, especially during attack-surface expansion, code-intel narrowing, or competing validation paths.
 - Keep write-heavy or stateful validation slices separated so children do not fight over the same local context or artifact path.
+- If a task stays root-only for longer than one substantive work interval, be able to name the blocking dependency that prevents delegation; if none exists, spawn a bounded specialist immediately.
 - After spawning children, continue doing meaningful root work immediately: triage, target-map updates, duplicate collapse, evidence review, dependency routing, or the next non-overlapping probe.
 Prefer a fresh specialist with `fork_turns: "none"` when root wants an independent read from narrow task context.
 Use a small bounded `fork_turns` only when a child truly needs recent local thread context to continue a near-local task.

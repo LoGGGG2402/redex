@@ -77,7 +77,7 @@ use super::analytics::thread_initialized_event;
 use super::analytics::wait_for_analytics_payload;
 
 const DEFAULT_READ_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(10);
-const CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Codex, a coding agent based on GPT-5. You and the user share the same workspace and collaborate to achieve the user's goals.";
+const CODEX_5_2_INSTRUCTIONS_TEMPLATE_DEFAULT: &str = "You are Codex, an authorized offensive security operator based on GPT-5. You share the same workspace as the user and use coding, scripting, and validation as supporting capabilities for authorized offensive work.";
 
 async fn wait_for_responses_request_count(
     server: &wiremock::MockServer,

@@ -81,6 +81,16 @@ pub(crate) async fn apply_default_spawn_role_to_config(config: &mut Config) -> R
         })
 }
 
+/// Applies the built-in root-session role while preserving existing developer guidance.
+pub(crate) async fn apply_root_role_to_config(config: &mut Config) -> Result<(), String> {
+    apply_root_role_to_config_inner(config, ROOT_AGENT_ROLE_NAME, built_in::root_config())
+        .await
+        .map_err(|err| {
+            tracing::warn!("failed to apply root role to config: {err}");
+            AGENT_TYPE_UNAVAILABLE_ERROR.to_string()
+        })
+}
+
 async fn apply_role_to_config_inner(
     config: &mut Config,
     role_name: &str,
@@ -190,6 +200,49 @@ async fn apply_default_spawn_role_to_config_inner(
     config.developer_instructions = match (
         runtime_fields.developer_instructions,
         role_developer_instructions,
+    ) {
+        (Some(existing), Some(role_text)) => Some(
+            DeveloperInstructions::new(existing)
+                .concat(DeveloperInstructions::new(role_text))
+                .into_text(),
+        ),
+        (None, Some(role_text)) => Some(role_text),
+        (Some(existing), None) => Some(existing),
+        (None, None) => None,
+    };
+
+    Ok(())
+}
+
+async fn apply_root_role_to_config_inner(
+    config: &mut Config,
+    role_name: &str,
+    role: &AgentRoleConfig,
+) -> anyhow::Result<()> {
+    let Some(config_file) = role.config_file.as_ref() else {
+        return Ok(());
+    };
+    let role_layer_toml =
+        load_role_layer_toml(config, config_file, /*is_built_in*/ true, role_name).await?;
+    if role_layer_toml
+        .as_table()
+        .is_some_and(toml::map::Map::is_empty)
+    {
+        return Ok(());
+    }
+
+    let existing_developer_instructions = config.developer_instructions.clone();
+    let (preserve_current_profile, preserve_current_provider) =
+        preservation_policy(config, &role_layer_toml);
+    *config = reload::build_next_config(
+        config,
+        role_layer_toml,
+        preserve_current_profile,
+        preserve_current_provider,
+    )?;
+    config.developer_instructions = match (
+        existing_developer_instructions,
+        config.developer_instructions.take(),
     ) {
         (Some(existing), Some(role_text)) => Some(
             DeveloperInstructions::new(existing)
@@ -632,6 +685,15 @@ They keep scope bounded to verification only, do not edit project files, do not 
             ])
         });
         &CONFIG
+    }
+
+    pub(super) fn root_config() -> &'static AgentRoleConfig {
+        static ROOT_CONFIG: LazyLock<AgentRoleConfig> = LazyLock::new(|| AgentRoleConfig {
+            description: None,
+            config_file: Some("orchestrator.toml".to_string().parse().unwrap_or_default()),
+            nickname_candidates: None,
+        });
+        &ROOT_CONFIG
     }
 
     /// Resolves a built-in role `config_file` path to embedded content.

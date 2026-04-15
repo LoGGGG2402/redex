@@ -71,7 +71,7 @@ async fn apply_role_defaults_to_worker_and_sets_worker_prompt() {
     assert_eq!(
         config.developer_instructions.as_deref(),
         Some(
-            "You are a worker.\nExecute one bounded task at a time.\nDefault to implementation, bug fixing, targeted refactoring, or evidence-producing support work that root already scoped.\nRespect ownership boundaries for files and modules and adapt to concurrent edits rather than reverting them.\nEscalate back to root when scope is unclear, when the task needs reprioritization, or when you discover a materially different problem than the one assigned.\nDo not take checkpoint ownership, session synthesis ownership, or delegation strategy ownership.\nReturn the concrete outcome, evidence, blockers, and the next justified action to root.\n"
+            "You are a worker.\nExecute one bounded task at a time.\nDefault to bounded offensive support work that root already scoped: recon expansion, semantic tracing, exploit reduction, payload shaping, replay setup, tooling, or evidence production.\nStay inside the authorized target slice and task boundary root assigned.\nOptimize for concrete artifacts and reproducible proof, not broad planning or open-ended speculation.\nRespect ownership boundaries for files, tools, and target slices and adapt to concurrent edits rather than reverting them.\nEscalate back to root when scope is unclear, priorities changed, authorization is uncertain, or you discover a materially different lead than the one assigned.\nDo not take checkpoint ownership, session synthesis ownership, or delegation strategy ownership.\nReturn the concrete outcome, evidence, blockers, and the next justified action to root.\n"
         )
     );
     assert_eq!(session_flags_layer_count(&config), before_layers + 1);
@@ -109,7 +109,7 @@ async fn apply_worker_role_is_available_and_sets_worker_prompt() {
     assert_eq!(
         config.developer_instructions.as_deref(),
         Some(
-            "You are a worker.\nExecute one bounded task at a time.\nDefault to implementation, bug fixing, targeted refactoring, or evidence-producing support work that root already scoped.\nRespect ownership boundaries for files and modules and adapt to concurrent edits rather than reverting them.\nEscalate back to root when scope is unclear, when the task needs reprioritization, or when you discover a materially different problem than the one assigned.\nDo not take checkpoint ownership, session synthesis ownership, or delegation strategy ownership.\nReturn the concrete outcome, evidence, blockers, and the next justified action to root.\n"
+            "You are a worker.\nExecute one bounded task at a time.\nDefault to bounded offensive support work that root already scoped: recon expansion, semantic tracing, exploit reduction, payload shaping, replay setup, tooling, or evidence production.\nStay inside the authorized target slice and task boundary root assigned.\nOptimize for concrete artifacts and reproducible proof, not broad planning or open-ended speculation.\nRespect ownership boundaries for files, tools, and target slices and adapt to concurrent edits rather than reverting them.\nEscalate back to root when scope is unclear, priorities changed, authorization is uncertain, or you discover a materially different lead than the one assigned.\nDo not take checkpoint ownership, session synthesis ownership, or delegation strategy ownership.\nReturn the concrete outcome, evidence, blockers, and the next justified action to root.\n"
         )
     );
     assert_eq!(session_flags_layer_count(&config), before_layers + 1);
@@ -188,6 +188,27 @@ async fn apply_default_spawn_role_preserves_runtime_fields_and_appends_worker_do
         .expect("developer instructions should be present");
     assert!(developer_instructions.contains("Parent developer instructions."));
     assert!(developer_instructions.contains("You are a worker."));
+}
+
+#[tokio::test]
+async fn apply_root_role_preserves_existing_guidance_and_appends_orchestrator_doctrine() {
+    let (_home, mut config) = test_config_with_cli_overrides(Vec::new()).await;
+    let before_layers = session_flags_layer_count(&config);
+    config.developer_instructions = Some("Repo-specific root guidance.".to_string());
+
+    apply_root_role_to_config(&mut config)
+        .await
+        .expect("root role should apply");
+
+    assert_eq!(config.model_reasoning_effort, Some(ReasoningEffort::High));
+    assert_eq!(session_flags_layer_count(&config), before_layers + 1);
+    let developer_instructions = config
+        .developer_instructions
+        .as_deref()
+        .expect("developer instructions should be present");
+    assert!(developer_instructions.contains("Repo-specific root guidance."));
+    assert!(developer_instructions.contains("You are the canonical root orchestrator"));
+    assert!(developer_instructions.contains("Use this root dispatch playbook by default"));
 }
 
 #[tokio::test]
@@ -1045,6 +1066,10 @@ fn built_in_config_file_contents_resolves_offensive_root_role_files() {
     );
     assert!(worker.contains("You are a worker."));
     assert!(worker.contains("Execute one bounded task at a time."));
+    assert!(worker.contains("Default to bounded offensive support work that root already scoped"));
+    assert!(
+        worker.contains("Stay inside the authorized target slice and task boundary root assigned.")
+    );
     assert!(worker.contains("Do not take checkpoint ownership, session synthesis ownership, or delegation strategy ownership."));
     assert!(verifier.contains("Do not edit project files."));
     assert!(verifier.contains("VERDICT: PASS"));

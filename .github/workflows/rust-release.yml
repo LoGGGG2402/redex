@@ -414,7 +414,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cargo build --locked --release --bin codex --bin codex-responses-api-proxy &
+          cargo build --locked --release --bin codex &
           cargo_pid=$!
           while kill -0 "$cargo_pid" 2>/dev/null; do
             echo "cargo build --release still running at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
@@ -425,9 +425,10 @@ jobs:
         shell: bash
         run: |
           dest="dist/x86_64-unknown-linux-gnu"
-          mkdir -p "$dest"
-          cp target/release/codex "$dest/codex-x86_64-unknown-linux-gnu"
-          cp target/release/codex-responses-api-proxy "$dest/codex-responses-api-proxy-x86_64-unknown-linux-gnu"
+          archive_root="${RUNNER_TEMP}/codex-x86_64-unknown-linux-gnu"
+          mkdir -p "$dest" "$archive_root"
+          cp target/release/codex "$archive_root/codex"
+          tar -C "$archive_root" -czf "$dest/codex-x86_64-unknown-linux-gnu.tar.gz" codex
       - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: x86_64-unknown-linux-gnu
@@ -632,14 +633,6 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           path: dist
-
-      - name: Add config schema release asset
-        run: cp codex-rs/core/config.schema.json dist/config-schema.json
-
-      - name: Stage installer scripts
-        run: |
-          cp scripts/install/install.sh dist/install.sh
-          cp scripts/install/install.ps1 dist/install.ps1
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
