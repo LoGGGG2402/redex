@@ -17,6 +17,7 @@ on:
     tags:
       - "rust-v*.*.*"
     paths:
+      - ".github/workflows/rust-release.yml"
       - "codex-rs/Cargo.toml"
   workflow_dispatch:
 
