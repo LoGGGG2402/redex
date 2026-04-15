@@ -761,7 +761,7 @@ jobs:
         run: cargo build --locked --release -p codex-cli
 
   results:
-    if: github.repository_owner == 'openai'
+    if: ${{ always() && github.repository_owner == 'openai' }}
     name: Full CI results
     needs:
       [
@@ -772,7 +772,6 @@ jobs:
         lint_build,
         tests,
       ]
-    if: always()
     runs-on: ubuntu-24.04
     steps:
       - name: Summarize
