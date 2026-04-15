@@ -758,7 +758,16 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends pkg-config libcap-dev
       - uses: dtolnay/rust-toolchain@a0b273b48ed29de4470960879e8381ff45632f26 # 1.93.0
       - name: cargo build --release
-        run: cargo build --locked --release -p codex-cli
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo build --locked --release -p codex-cli &
+          cargo_pid=$!
+          while kill -0 "$cargo_pid" 2>/dev/null; do
+            echo "cargo build --release still running at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            sleep 60
+          done
+          wait "$cargo_pid"
 
   results:
     if: ${{ always() && github.repository_owner == 'openai' }}

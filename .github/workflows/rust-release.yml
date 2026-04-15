@@ -412,7 +412,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@a0b273b48ed29de4470960879e8381ff45632f26 # 1.93.0
       - name: Cargo build
         shell: bash
-        run: cargo build --locked --release --bin codex --bin codex-responses-api-proxy
+        run: |
+          set -euo pipefail
+          cargo build --locked --release --bin codex --bin codex-responses-api-proxy &
+          cargo_pid=$!
+          while kill -0 "$cargo_pid" 2>/dev/null; do
+            echo "cargo build --release still running at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            sleep 60
+          done
+          wait "$cargo_pid"
       - name: Stage artifacts
         shell: bash
         run: |
